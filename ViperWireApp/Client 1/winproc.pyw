@@ -5,6 +5,46 @@ import threading as th
 import ctypes as ct
 import socket as soc
 
+stop_threads = False
+
+t1 = None
+t2 = None
+t3 = None
+t4 = None
+t5 = None
+
+def discon_all():
+    global t1, t2, t3, t4, t5, stop_threads
+    stop_threads = True
+
+    if t1 is not None:
+        t1.join()
+        t1 = None
+
+    if t2 is not None:
+        t2.join()
+        t2 = None
+    
+    if t3 is not None:
+        t3.join()
+        t3 = None
+    
+    if t4 is not None:
+        t4.join()
+        t4 = None
+    
+    if t5 is not None:
+        t5.join()
+        t5 = None
+
+    # Also stop and destroy the servers here if needed
+    if server is not None:
+        server.stop_server()
+        t1 = None
+
+    if receiver is not None:
+        receiver.stop_server()
+        receiver = None
 
 # getting local ip
 def getLocalIPV4():
@@ -13,43 +53,40 @@ def getLocalIPV4():
 
 local_ip = getLocalIPV4()
 
+# getting local IP for Streaming and Receiving
 locIPV4 = soc.gethostbyname(soc.gethostname())
 server = StreamingServer(locIPV4, 14444)
 receiver = AudioReceiver(locIPV4, 18888)
 
 # creating the listening, streaming and receiveing functions
 def listen_init():
-    global t1
-    global t2
+    global stop_threads, t1, t2
+    stop_threads = False
     t1 = th.Thread(target=server.start_server)
     t2 = th.Thread(target=receiver.start_server)
     t1.start()
     t2.start()
     
 def camstream_init():
-    global t3
+    global stop_threads, t3
+    stop_threads = False
     camera_client = CameraClient(TargetIPV4.get(1.0, 'end-1c'), 13333)
     t3 = th.Thread(target=camera_client.start_stream)
     t3.start()
 
 def screenshare_init():
-    global t4
+    global stop_threads, t4
+    stop_threads = False
     screen_client = ScreenShareClient(TargetIPV4.get(1.0, 'end-1c'), 13333)
     t4 = th.Thread(target=screen_client.start_stream)
     t4.start()
 
 def audiostream_init():
-    global t5
+    global stop_threads, t5
+    stop_threads = False
     audio_sender = AudioSender(TargetIPV4.get(1.0, 'end-1c'), 16666)
     t5 = th.Thread(target=audio_sender.start_stream)
     t5.start()
-
-def discon_all():
-    t1.join()
-    t2.join()
-    t3.join()
-    t4.join()
-    t5.join()    
 
 # Define Window style via DWM (Desktop Windows Manager API)
 
