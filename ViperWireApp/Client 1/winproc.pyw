@@ -13,6 +13,8 @@ t3 = None
 t4 = None
 t5 = None
 
+server_on = 0
+
 def discon_all():
     global stop_threads
     stop_threads = True
@@ -26,7 +28,9 @@ local_ip = getLocalIPV4()
 
 # creating the listening, streaming and receiveing functions
 def listen_init():
-    global stop_threads, t1, t2, server, receiver, RecvPort1, RecvPort2
+    global stop_threads, t1, t2, server, receiver, RecvPort1, RecvPort2, server_on
+
+    server_on = 1
 
     p1 = int(RecvPort1.get(1.0, 'end-1c'))
     p2 = int(RecvPort2.get(1.0, 'end-1c'))
@@ -43,32 +47,41 @@ def listen_init():
     t2.start()
 
 def camstream_init():
-    global stop_threads, t3, TargetPort1
-    stop_threads = False
-    pt1 = int(TargetPort1.get(1.0, 'end-1c'))
-    camera_client = CameraClient(TargetIPV4.get(1.0, 'end-1c'), pt1)
-    t3 = th.Thread(target=camera_client.start_stream)
-    t3.start()
+    global stop_threads, t3, TargetPort1, server_on
+    
+    if server_on == 1:
+        stop_threads = False
+        pt1 = int(TargetPort1.get(1.0, 'end-1c'))
+        camera_client = CameraClient(TargetIPV4.get(1.0, 'end-1c'), pt1)
+        t3 = th.Thread(target=camera_client.start_stream)
+        t3.start()
 
 def screenshare_init():
-    global stop_threads, t4, TargetPort1
-    stop_threads = False
-    pt1 = int(TargetPort1.get(1.0, 'end-1c'))
-    screen_client = ScreenShareClient(TargetIPV4.get(1.0, 'end-1c'), pt1)
-    t4 = th.Thread(target=screen_client.start_stream)
-    t4.start()
+    global stop_threads, t4, TargetPort1, server_on
+    
+    if server_on == 1:
+        stop_threads = False
+        pt1 = int(TargetPort1.get(1.0, 'end-1c'))
+        screen_client = ScreenShareClient(TargetIPV4.get(1.0, 'end-1c'), pt1)
+        t4 = th.Thread(target=screen_client.start_stream)
+        t4.start()
 
 def audiostream_init():
-    global stop_threads, t5, TargetPort2
-    stop_threads = False
-    pt2 = int(TargetPort2.get(1.0, 'end-1c'))
-    audio_sender = AudioSender(TargetIPV4.get(1.0, 'end-1c'), pt2)
-    t5 = th.Thread(target=audio_sender.start_stream)
-    t5.start()
+    global stop_threads, t5, TargetPort2, server_on
+    
+    if server_on == 1:
+        stop_threads = False
+        pt2 = int(TargetPort2.get(1.0, 'end-1c'))
+        audio_sender = AudioSender(TargetIPV4.get(1.0, 'end-1c'), pt2)
+        t5 = th.Thread(target=audio_sender.start_stream)
+        t5.start()
 
 def discon_all():
     global t1, t2, t3, t4, t5, stop_threads
     stop_threads = True
+    
+    if server_on == 1:
+        return
 
     if t1 is not None:
         t1.join()
